@@ -84,7 +84,7 @@ func (tw *TimeWindowedMovingAverage) adjustWindow() {
 	}
 
 	tw.sum -= tw.window[0].value * tw.window[0].weight
-	tw.window[0].weight = tw.window[1].time - tw.window[0].time
+	tw.window[0].weight = (tw.window[1].time - tw.window[0].time) / 2
 	tw.sum += tw.window[0].value * tw.window[0].weight
 }
 
@@ -108,7 +108,7 @@ func (tw *TimeWindowedMovingAverage) calcWeight() {
 }
 
 // Value calc TimeWindowedMovingAverage
-func (tw *TimeWindowedMovingAverage) Value(i Item) (float64, error) {
+func (tw *TimeWindowedMovingAverage) Value() (float64, error) {
 	if len(tw.window) < 1 {
 		return 0, errors.New("insufficient number of items")
 	} else if float64(tw.window[len(tw.window)-1].time-tw.window[0].time) < tw.windowSize {
