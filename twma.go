@@ -67,6 +67,8 @@ func (tw *TimeWindowedMovingAverage) addLast(addItem item) {
 	tw.adjustWindow()
 }
 
+// adjustWindow .. remove Items before (lastItem.Time - windowSize)
+// and adjust weight of first Item.
 func (tw *TimeWindowedMovingAverage) adjustWindow() {
 	divider := 0
 	lastTime := tw.window[len(tw.window)-1].time
