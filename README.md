@@ -1,5 +1,5 @@
 # twma
-time windowed moving average
+Calculating Moving Average with Time Window
 
 ## usage
 
