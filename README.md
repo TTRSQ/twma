@@ -1,6 +1,6 @@
 # twma
 In real time data stream, calculating moving average with time window.  
-twma can be used for sensor data, stock trading information, and etc.  
+twma is made with the intention of analyze sensor data, stock trading information, and etc.  
 <img src="https://user-images.githubusercontent.com/26806928/74592120-81ec0580-5061-11ea-9d6d-66b2d10368bb.png" width="70%" alt="btc-price in 2020-2-14">
 
 ## usage
