@@ -1,5 +1,5 @@
 # twma
-In real time data stream, calculating moving average with time window.
+In real time data stream, calculating moving average with time window.  
 twma can be used for sensor data, stock trading information, and etc.
 
 ## usage
