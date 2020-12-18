@@ -17,19 +17,19 @@ func absDiff(a, b float64) float64 {
 
 func TestOne(t *testing.T) {
 	items := []Item{
-		Item{
+		{
 			Value: 1,
 			Time:  time.Date(2001, 5, 20, 23, 59, 0, 0, time.Local),
 		},
-		Item{
+		{
 			Value: 1,
 			Time:  time.Date(2001, 5, 20, 23, 59, 1, 0, time.Local),
 		},
-		Item{
+		{
 			Value: 1,
 			Time:  time.Date(2001, 5, 20, 23, 59, 3, 0, time.Local),
 		},
-		Item{
+		{
 			Value: 1,
 			Time:  time.Date(2001, 5, 20, 23, 59, 11, 0, time.Local),
 		},
@@ -38,9 +38,9 @@ func TestOne(t *testing.T) {
 	expect := 1.0
 
 	// order by time ask.
-	testItems(items, windowSizeSec, expect, t)
+	testItems(items, windowSizeSec, expect, 1, t)
 	// order by time desc.
-	testItemsDesc(items, windowSizeSec, expect, t)
+	testItemsDesc(items, windowSizeSec, expect, 1, t)
 }
 
 func TestLinear(t *testing.T) {
@@ -58,30 +58,60 @@ func TestLinear(t *testing.T) {
 	expect := 5.0
 
 	// order by time ask.
-	testItems(items, windowSizeSec, expect, t)
+	testItems(items, windowSizeSec, expect, 0, t)
 	// order by time desc.
-	testItemsDesc(items, windowSizeSec, expect, t)
+	testItemsDesc(items, windowSizeSec, expect, 0, t)
 }
 
-func testItems(items []Item, windowSizeSec int, expect float64, t *testing.T) {
+func TestPopItems(t *testing.T) {
+	v1 := 0.0
+	t1 := time.Now()
+
+	items := []Item{}
+	for i := 0; i <= 10; i++ {
+		items = append(items, Item{
+			Value: v1 + float64(i),
+			Time:  t1.Add(time.Second * time.Duration(i)),
+		})
+	}
+	// expect 3 item will pop that values (0.0, 1.0, 2.0)
+	windowSizeSec := 7
+	expect := float64(3.0/2+4+5+6+7+8+9+10.0/2) / 7
+	expectPopCount := 3
+
+	// order by time ask.
+	testItems(items, windowSizeSec, expect, expectPopCount, t)
+	// order by time desc.
+	testItemsDesc(items, windowSizeSec, expect, expectPopCount, t)
+}
+
+func testItems(items []Item, windowSizeSec int, expect float64, popCount int, t *testing.T) {
 	ma := NewTWMA(time.Second * time.Duration(windowSizeSec))
+	popItems := []Item{}
 	for _, item := range items {
-		ma.Add(item)
+		popItems = append(popItems, ma.Apply(item)...)
 	}
 	result, _ := ma.Value()
+	if len(popItems) != popCount {
+		t.Errorf("poped items count is not valid: %d", len(popItems))
+	}
 	if absDiff(result, expect) > allowableError {
 		fmt.Printf("%+v\n", ma)
 		t.Errorf("result: %.2f, expected value: %.2f", result, expect)
 	}
 }
 
-func testItemsDesc(items []Item, windowSizeSec int, expect float64, t *testing.T) {
+func testItemsDesc(items []Item, windowSizeSec int, expect float64, popCount int, t *testing.T) {
 	ma := NewTWMA(time.Second * time.Duration(windowSizeSec))
+	popItems := []Item{}
 	for idx := range items {
 		rIdx := len(items) - 1 - idx
-		ma.Add(items[rIdx])
+		popItems = append(popItems, ma.Apply(items[rIdx])...)
 	}
 	result, _ := ma.Value()
+	if len(popItems) != popCount {
+		t.Errorf("poped items count is not valid: %d", len(popItems))
+	}
 	if absDiff(result, expect) > allowableError {
 		fmt.Printf("%+v\n", ma)
 		t.Errorf("result: %.2f, expected value: %.2f", result, expect)

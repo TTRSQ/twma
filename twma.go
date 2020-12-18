@@ -32,8 +32,8 @@ func NewTWMA(windowSize time.Duration) *TimeWindowedMovingAverage {
 	return twma
 }
 
-// Add .. add item in chronological order 🙏.
-func (tw *TimeWindowedMovingAverage) Add(addItem Item) {
+// Apply .. add new item and get deleted item
+func (tw *TimeWindowedMovingAverage) Apply(addItem Item) []Item {
 	tItem := item{
 		value: addItem.Value,
 		time:  float64(addItem.Time.UnixNano()) / float64(time.Second),
@@ -41,35 +41,47 @@ func (tw *TimeWindowedMovingAverage) Add(addItem Item) {
 
 	if len(tw.window) == 0 {
 		tw.window = append(tw.window, tItem)
-		return
+		return []Item{}
 	} else if tw.window[len(tw.window)-1].time < tItem.time {
 		diff := tItem.time - tw.window[len(tw.window)-1].time
 		tItem.weight = diff / 2
-		tw.addLast(tItem)
-		return
+		return translateItem(tw.addLast(tItem))
 	}
 
 	tw.window = append(tw.window, tItem)
 	sort.Slice(tw.window, func(i, j int) bool {
 		return tw.window[i].time < tw.window[j].time
 	})
-	tw.adjustWindow()
+	deletedList := tw.adjustWindow()
 	tw.calcWeight()
+	return translateItem(deletedList)
 }
 
-func (tw *TimeWindowedMovingAverage) addLast(addItem item) {
+func translateItem(l []item) []Item {
+	letList := []Item{}
+	for _, v := range l {
+		itime := int64(v.time)
+		letList = append(letList, Item{
+			Value: v.value,
+			Time:  time.Unix(itime, int64((v.time-float64(itime))*1000000000)),
+		})
+	}
+	return letList
+}
+
+func (tw *TimeWindowedMovingAverage) addLast(addItem item) []item {
 	tw.window[len(tw.window)-1].weight += addItem.weight
 	tw.sum += tw.window[len(tw.window)-1].value * addItem.weight
 
 	tw.window = append(tw.window, addItem)
 	tw.sum += addItem.value * addItem.weight
 
-	tw.adjustWindow()
+	return tw.adjustWindow()
 }
 
 // adjustWindow .. remove Items before (lastItem.Time - windowSize)
 // and adjust weight of first Item.
-func (tw *TimeWindowedMovingAverage) adjustWindow() {
+func (tw *TimeWindowedMovingAverage) adjustWindow() []item {
 	divider := 0
 	lastTime := tw.window[len(tw.window)-1].time
 	for idx := range tw.window {
@@ -88,6 +100,8 @@ func (tw *TimeWindowedMovingAverage) adjustWindow() {
 	tw.sum -= tw.window[0].value * tw.window[0].weight
 	tw.window[0].weight = (tw.window[1].time - tw.window[0].time) / 2
 	tw.sum += tw.window[0].value * tw.window[0].weight
+
+	return deleteList
 }
 
 func (tw *TimeWindowedMovingAverage) calcWeight() {
