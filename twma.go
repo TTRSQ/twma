@@ -132,3 +132,9 @@ func (tw *TimeWindowedMovingAverage) Value() (float64, error) {
 	}
 	return tw.sum / (tw.window[len(tw.window)-1].time - tw.window[0].time), nil
 }
+
+// return window size with time duration
+func (tw *TimeWindowedMovingAverage) WindowSize() time.Duration {
+	nano := int(tw.windowSize * 1000000000)
+	return time.Duration(nano) * time.Nanosecond
+}

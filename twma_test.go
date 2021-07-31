@@ -117,3 +117,17 @@ func testItemsDesc(items []Item, windowSizeSec int, expect float64, popCount int
 		t.Errorf("result: %.2f, expected value: %.2f", result, expect)
 	}
 }
+
+func TestWindowSize(t *testing.T) {
+	window1 := 20*time.Minute + time.Hour
+	ma1 := NewTWMA(window1)
+	if ma1.WindowSize() != window1 {
+		t.Errorf("result: %+v, expected value: %+v", ma1.WindowSize(), window1)
+	}
+
+	window2 := 12*time.Second + time.Minute
+	ma2 := NewTWMA(window2)
+	if ma2.WindowSize() != window2 {
+		t.Errorf("result: %+v, expected value: %+v", ma2.WindowSize(), window2)
+	}
+}
